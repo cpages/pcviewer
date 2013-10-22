@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 2.8)
-project (COPViewer)
-set (COPViewer_VERSION_MAJOR 0)
-set (COPViewer_VERSION_MINOR 1)
+project (PCViewer)
+set (PCViewer_VERSION_MAJOR 0)
+set (PCViewer_VERSION_MINOR 1)
 
 set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 find_package (SDL2 REQUIRED)
@@ -19,8 +19,8 @@ set (SOURCES
 
 add_definitions(-DSDL_NO_COMPAT)
 
-add_executable (copviewer WIN32 ${SOURCES})
-target_link_libraries (copviewer
+add_executable (pcviewer WIN32 ${SOURCES})
+target_link_libraries (pcviewer
 	${SDL2_LIBRARIES}
 	${OPENGLES2_LIBRARIES} ${EGL_LIBRARIES}
    	${ADDITIONAL_DEPS}
