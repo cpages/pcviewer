@@ -1,4 +1,6 @@
 local.properties
 libs
 obj
+bin
+gen
 jni/SDL
