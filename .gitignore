@@ -1,0 +1,4 @@
+local.properties
+libs
+obj
+jni/SDL
