@@ -69,6 +69,7 @@ const char fragment_src [] =
 //            + atan(pos.y,pos.x) - phase );
  
  
+#if 0
 void
 print_shader_info_log (
    GLuint  shader      // handle to the shader
@@ -89,6 +90,7 @@ print_shader_info_log (
       if ( success != GL_TRUE )   exit ( 1 );
    }
 }
+#endif
  
  
 GLuint
@@ -102,7 +104,7 @@ load_shader (
    glShaderSource  ( shader , 1 , &shader_source , NULL );
    glCompileShader ( shader );
  
-   print_shader_info_log ( shader );
+   //print_shader_info_log ( shader );
  
    return shader;
 }
@@ -232,8 +234,10 @@ int main(int argc, char *argv[])
 
 		if (SDL_Init(SDL_INIT_VIDEO) != 0)
 	   	{
+#ifndef __ANDROID__
 			std::cout << "Couldn't initialize SDL: " << SDL_GetError()
 			   	<< std::endl;
+#endif
 			return -1;
 		}
 
@@ -275,7 +279,9 @@ int main(int argc, char *argv[])
 	   phase_loc     = glGetUniformLocation ( shaderProgram , "phase"    );
 	   offset_loc    = glGetUniformLocation ( shaderProgram , "offset"   );
 	   if ( position_loc < 0  ||  phase_loc < 0  ||  offset_loc < 0 ) {
+#ifndef __ANDROID__
 		   std::cerr << "Unable to get uniform location" << std::endl;
+#endif
 		  return 1;
 	   }
 
@@ -326,7 +332,9 @@ int main(int argc, char *argv[])
 	}
 	catch (const std::exception &e)
 	{
+#ifndef __ANDROID__
 		std::cerr << "Error: " << e.what() << std::endl;
+#endif
 
 		if (context)
 			SDL_GL_DeleteContext(context);
