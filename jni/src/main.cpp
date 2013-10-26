@@ -48,6 +48,17 @@ const char vertex_src [] =
       pos = position.xy;                 \
    }                                     \
 ";
+
+const char *g_vshader =
+"                                               \
+    attribute vec3 vertexPosition_modelspace;   \
+                                                \
+    void main()                                 \
+    {                                           \
+        gl_Position = vec4(vertexPosition_modelspace, 1.0); \
+        gl_PointSize = 16.0;                    \
+    }                                           \
+";
  
  
 const char fragment_src [] =
@@ -67,6 +78,14 @@ const char fragment_src [] =
 //      cos( 20.*sqrt(pos.x*pos.x + pos.y*pos.y) + atan(pos.y,pos.x) - phase );
 //      cos( 30.*sqrt(pos.x*pos.x + 1.5*pos.y*pos.y - 1.8*pos.x*pos.y*pos.y)
 //            + atan(pos.y,pos.x) - phase );
+
+const char *g_fshader =
+"                               \
+    void main()                 \
+    {                           \
+	    gl_FragColor = vec4(1,0,0,1); \
+    }                           \
+";
  
  
 #if 0
@@ -162,6 +181,7 @@ static GLuint make_shader(GLenum type, char *code)
     return shader;
 }
 
+#if 0
 static GLuint make_program(GLuint vertex_shader, GLuint fragment_shader)
 {
     GLint program_ok;
@@ -183,11 +203,12 @@ static GLuint make_program(GLuint vertex_shader, GLuint fragment_shader)
     }
     return program;
 }
+#endif
 
 static const GLfloat g_vertex_buffer_data[] = { 
     -1.0f, -1.0f, 0.0f,
      1.0f, -1.0f, 0.0f,
-     0.0f,  1.0f, 0.0f,
+     0.0f,  0.5f, 0.0f,
 };
 static GLuint program;
 
@@ -264,14 +285,20 @@ int main(int argc, char *argv[])
             fprintf(stderr, "SDL_GL_MakeCurrent(): %s\n", SDL_GetError());
         }
 
+#if 0
         GLuint vertexShader   = load_shader ( vertex_src , GL_VERTEX_SHADER  );     // load vertex shader
         GLuint fragmentShader = load_shader ( fragment_src , GL_FRAGMENT_SHADER );  // load fragment shader
+#else
+        GLuint vertexShader   = load_shader ( g_vshader , GL_VERTEX_SHADER  );     // load vertex shader
+        GLuint fragmentShader = load_shader ( g_fshader , GL_FRAGMENT_SHADER );  // load fragment shader
+#endif
       
         GLuint shaderProgram  = glCreateProgram ();                 // create program object
         glAttachShader ( shaderProgram, vertexShader );             // and attach both...
         glAttachShader ( shaderProgram, fragmentShader );           // ... shaders to it
       
         glLinkProgram ( shaderProgram );    // link the program
+#if 0
         glUseProgram  ( shaderProgram );    // and select it for usage
       
         //// now get the locations (kind of handle) of the shaders variables
@@ -284,6 +311,7 @@ int main(int argc, char *argv[])
  #endif
            return 1;
         }
+#endif
 
 #if 0
         GLuint vshader = make_shader(GL_VERTEX_SHADER, g_vshader);
@@ -292,8 +320,9 @@ int main(int argc, char *argv[])
         if (program == 0) {
             fprintf(stderr, "Error making program from shaders");
         }
+#endif
 
-        GLuint vertexPosition_modelspaceID = glGetAttribLocation(program, "vertexPosition_modelspace");
+        GLuint vertexPosition_modelspaceID = glGetAttribLocation(shaderProgram, "vertexPosition_modelspace");
 
         GLuint vertexbuffer;
         glGenBuffers(1, &vertexbuffer);
@@ -303,7 +332,7 @@ int main(int argc, char *argv[])
         glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glUseProgram(program);
+        glUseProgram(shaderProgram);
 
         // 1rst attribute buffer : vertices
         glEnableVertexAttribArray(vertexPosition_modelspaceID);
@@ -318,11 +347,11 @@ int main(int argc, char *argv[])
         );
 
         // Draw the triangle !
-        glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
+        //glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
+        glDrawArrays(GL_POINTS, 0, 3); // 3 indices starting at 0 -> 1 triangle
 
         glDisableVertexAttribArray(vertexPosition_modelspaceID);
-#endif
-        render();
+        //render();
 
         SDL_GL_SwapWindow(window);
 
