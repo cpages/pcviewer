@@ -10,7 +10,7 @@ find_package (OpenGLES2 REQUIRED)
 include_directories (
     "${SDL2_INCLUDE_DIR}"
 	"${OPENGLES2_INCLUDE_DIR}"
-	#"${PROJECT_SOURCE_DIR}/src"
+	"${PROJECT_SOURCE_DIR}/3rdparty/glm"
     )
 
 set (SOURCES

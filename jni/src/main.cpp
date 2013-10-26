@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <sstream>
 #include <cmath>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include "SDL.h"
 #include "SDL_opengles2.h"
 
@@ -41,8 +43,8 @@ namespace
         \
         void main() { \
             vec4 v = vec4(vertexPos, 1); \
-            gl_Position = v; \
-            gl_PointSize = 16.0; \
+            gl_Position = MVP * v; \
+            gl_PointSize = 5.0; \
         }";
 
     const char *fshaderSrc =
@@ -157,15 +159,16 @@ int main(int argc, char *argv[])
         glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        const GLfloat mvp[] =
-        {
-            1.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f
-        };
-        GLuint mvpID = glGetAttribLocation(shaderProgram, "MVP");
-        glUniformMatrix4fv(mvpID, 1, GL_FALSE, mvp);
+        glm::mat4 mProj(glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f));
+        glm::mat4 mView= glm::lookAt(
+                glm::vec3(4,3,3),
+                glm::vec3(0,0,0),
+                glm::vec3(0,1,0)
+                );
+        glm::mat4 mModel = glm::mat4(1.0f);
+        glm::mat4 mvp = mProj * mView * mModel;
+        GLuint mvpID = glGetUniformLocation(shaderProgram, "MVP");
+        glUniformMatrix4fv(mvpID, 1, GL_FALSE, &mvp[0][0]);
 
         GLuint vertexPosID = glGetAttribLocation(shaderProgram, "vertexPos");
         glEnableVertexAttribArray(vertexPosID);
