@@ -34,6 +34,35 @@ namespace
         oss << base << ": " << SDL_GetError() << std::endl;
         return oss.str();
     }
+
+    const char *vshaderSrc =
+        "attribute vec3 vertexPos; \
+        uniform mat4 MVP; \
+        \
+        void main() { \
+            vec4 v = vec4(vertexPos, 1); \
+            gl_Position = v; \
+            gl_PointSize = 16.0; \
+        }";
+
+    const char *fshaderSrc =
+        " \
+        void main() { \
+            gl_FragColor = vec4(1,0,0,1); \
+        }";
+
+    const GLfloat cubePoints[] =
+    {
+        -1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        -1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f,
+        1.0f, 1.0f, -1.0f,
+        0.0f, 0.0f, 0.0f
+    };
 }
 
 const char vertex_src [] =
@@ -59,8 +88,7 @@ const char *g_vshader =
         gl_PointSize = 16.0;                    \
     }                                           \
 ";
- 
- 
+
 const char fragment_src [] =
 "                                                      \
    varying mediump vec2    pos;                        \
@@ -83,7 +111,7 @@ const char *g_fshader =
 "                               \
     void main()                 \
     {                           \
-	    gl_FragColor = vec4(1,0,0,1); \
+        gl_FragColor = vec4(1,0,0,1); \
     }                           \
 ";
  
@@ -110,8 +138,7 @@ print_shader_info_log (
    }
 }
 #endif
- 
- 
+
 GLuint
 load_shader (
    const char  *shader_source,
@@ -119,17 +146,15 @@ load_shader (
 )
 {
    GLuint  shader = glCreateShader( type );
- 
+
    glShaderSource  ( shader , 1 , &shader_source , NULL );
    glCompileShader ( shader );
- 
+
    //print_shader_info_log ( shader );
- 
+
    return shader;
 }
- 
- 
- 
+
 GLfloat
    norm_x    =  0.0,
    norm_y    =  0.0,
@@ -137,15 +162,14 @@ GLfloat
    offset_y  =  0.0,
    p1_pos_x  =  0.0,
    p1_pos_y  =  0.0;
- 
+
 GLint
    phase_loc,
    offset_loc,
    position_loc;
- 
- 
+
 bool        update_pos = false;
- 
+
 const float vertexArray[] = {
    0.0,  0.5,  0.0,
   -0.5,  0.0,  0.0,
@@ -285,6 +309,45 @@ int main(int argc, char *argv[])
             fprintf(stderr, "SDL_GL_MakeCurrent(): %s\n", SDL_GetError());
         }
 
+        GLuint vertexShader = load_shader(vshaderSrc, GL_VERTEX_SHADER);
+        GLuint fragmentShader = load_shader(fshaderSrc, GL_FRAGMENT_SHADER);
+
+        GLuint shaderProgram = glCreateProgram();
+        glAttachShader(shaderProgram, vertexShader);
+        glAttachShader(shaderProgram, fragmentShader);
+
+        glLinkProgram(shaderProgram);
+        glUseProgram(shaderProgram);
+
+        GLuint vertexBuffer;
+        glGenBuffers(1, &vertexBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(cubePoints), cubePoints, GL_STATIC_DRAW);
+
+        glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        const GLfloat mvp[] =
+        {
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        };
+        GLuint mvpID = glGetAttribLocation(shaderProgram, "MVP");
+        glUniformMatrix4fv(mvpID, 1, GL_FALSE, mvp);
+
+        GLuint vertexPosID = glGetAttribLocation(shaderProgram, "vertexPos");
+        glEnableVertexAttribArray(vertexPosID);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        glVertexAttribPointer(vertexPosID, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+        glDrawArrays(GL_POINTS, 0, 9);
+
+        glDisableVertexAttribArray(vertexPosID);
+
+#if 0
+
 #if 0
         GLuint vertexShader   = load_shader ( vertex_src , GL_VERTEX_SHADER  );     // load vertex shader
         GLuint fragmentShader = load_shader ( fragment_src , GL_FRAGMENT_SHADER );  // load fragment shader
@@ -352,6 +415,8 @@ int main(int argc, char *argv[])
 
         glDisableVertexAttribArray(vertexPosition_modelspaceID);
         //render();
+
+#endif
 
         SDL_GL_SwapWindow(window);
 
