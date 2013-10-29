@@ -224,6 +224,8 @@ int main(int argc, char *argv[])
 
         ModelPos pcPos;
         SDL_Event event;
+        bool translating = false;
+        bool rotating = false;
         bool run = true;
         while (run)
         {
@@ -231,6 +233,30 @@ int main(int argc, char *argv[])
             {
                 switch (event.type)
                 {
+                    case SDL_MOUSEBUTTONDOWN:
+                        if (event.button.button == SDL_BUTTON_LEFT)
+                            translating = true;
+                        else if (event.button.button == SDL_BUTTON_RIGHT)
+                            rotating = true;
+                        break;
+                    case SDL_MOUSEBUTTONUP:
+                        if (event.button.button == SDL_BUTTON_LEFT)
+                            translating = false;
+                        else if (event.button.button == SDL_BUTTON_RIGHT)
+                            rotating = false;
+                        break;
+                    case SDL_MOUSEMOTION:
+                        if (translating)
+                        {
+                            pcPos.tx += event.motion.xrel * .01;
+                            pcPos.ty -= event.motion.yrel * .01;
+                        }
+                        else if (rotating)
+                        {
+                            pcPos.rx += event.motion.yrel * .01;
+                            pcPos.ry += event.motion.xrel * .01;
+                        }
+                        break;
                     case SDL_QUIT:
                         run = false;
                         break;
@@ -238,7 +264,6 @@ int main(int argc, char *argv[])
             }
 
             render(glState, mProjView * mModelFromPos(pcPos));
-            pcPos.ry += .01;
             SDL_Delay(10);
         }
     }
