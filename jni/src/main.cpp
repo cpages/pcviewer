@@ -137,18 +137,11 @@ namespace
     }
 
     void
-    render(GLState &glState, const glm::mat4 &mModel)
+    render(GLState &glState, const glm::mat4 &mvp)
     {
         glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 mProj(glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f));
-        glm::mat4 mView= glm::lookAt(
-                glm::vec3(0,3,10),
-                glm::vec3(0,0,0),
-                glm::vec3(0,1,0)
-                );
-        glm::mat4 mvp = mProj * mView * mModel;
         GLuint mvpID = glGetUniformLocation(glState.shaderProgram, "MVP");
         glUniformMatrix4fv(mvpID, 1, GL_FALSE, &mvp[0][0]);
 
@@ -219,6 +212,16 @@ int main(int argc, char *argv[])
         glBindBuffer(GL_ARRAY_BUFFER, glState.vertexBuffer);
         glBufferData(GL_ARRAY_BUFFER, sizeof(cubePoints), cubePoints, GL_STATIC_DRAW);
 
+        //prepare fix view matrices
+        const glm::mat4 mProj =
+            glm::perspective(45.0f, float(WIDTH) / HEIGHT, 0.1f, 100.0f);
+        const glm::mat4 mView = glm::lookAt(
+                glm::vec3(0,3,10),
+                glm::vec3(0,0,0),
+                glm::vec3(0,1,0)
+                );
+        const glm::mat4 mProjView = mProj * mView;
+
         ModelPos pcPos;
         SDL_Event event;
         bool run = true;
@@ -234,7 +237,7 @@ int main(int argc, char *argv[])
                 }
             }
 
-            render(glState, mModelFromPos(pcPos));
+            render(glState, mProjView * mModelFromPos(pcPos));
             pcPos.ry += .01;
             SDL_Delay(10);
         }
