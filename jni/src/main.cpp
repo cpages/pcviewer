@@ -26,8 +26,17 @@
 
 namespace
 {
-    SDL_Window *window = NULL;
-    SDL_GLContext context = NULL;
+    struct GLState
+    {
+        GLState():
+            window(NULL), context(NULL)
+        {}
+
+        SDL_Window *window;
+        SDL_GLContext context;
+        GLuint shaderProgram;
+        GLuint vertexBuffer;
+    };
 
     std::string
     fillSDLError(const std::string &base)
@@ -101,10 +110,40 @@ namespace
 
        return shader;
     }
+
+    void
+    render(GLState &glState)
+    {
+        glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glm::mat4 mProj(glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f));
+        glm::mat4 mView= glm::lookAt(
+                glm::vec3(4,3,3),
+                glm::vec3(0,0,0),
+                glm::vec3(0,1,0)
+                );
+        glm::mat4 mModel = glm::mat4(1.0f);
+        glm::mat4 mvp = mProj * mView * mModel;
+        GLuint mvpID = glGetUniformLocation(glState.shaderProgram, "MVP");
+        glUniformMatrix4fv(mvpID, 1, GL_FALSE, &mModel[0][0]);
+
+        GLuint vertexPosID = glGetAttribLocation(glState.shaderProgram, "vertexPos");
+        glEnableVertexAttribArray(vertexPosID);
+        glBindBuffer(GL_ARRAY_BUFFER, glState.vertexBuffer);
+        glVertexAttribPointer(vertexPosID, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+        glDrawArrays(GL_POINTS, 0, 9);
+
+        glDisableVertexAttribArray(vertexPosID);
+
+        SDL_GL_SwapWindow(glState.window);
+    }
 }
 
 int main(int argc, char *argv[])
 {
+    GLState glState;
     try
     {
         srand(time(NULL));
@@ -127,19 +166,19 @@ int main(int argc, char *argv[])
         //TODO: using _DESKTOP sometimes ends up in black screen, and does not
         //work if I add the whole mesa path in LD_LIBRARY_PATH (points are not
         //painted), but seems the way to go
-        window = SDL_CreateWindow("PCViewer", SDL_WINDOWPOS_UNDEFINED,
+        glState.window = SDL_CreateWindow("PCViewer", SDL_WINDOWPOS_UNDEFINED,
                 SDL_WINDOWPOS_UNDEFINED, 0, 0,
                 SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN_DESKTOP);
-        if (window == NULL)
+        if (glState.window == NULL)
             throw std::runtime_error(fillSDLError("Failed to create window"));
 
-        context = SDL_GL_CreateContext(window);
-        if (context == NULL)
+        glState.context = SDL_GL_CreateContext(glState.window);
+        if (glState.context == NULL)
             throw std::runtime_error(fillSDLError("Failed to create context"));
 
         //SDL_GL_SetSwapInterval(1);
 
-        int status = SDL_GL_MakeCurrent(window, context);
+        int status = SDL_GL_MakeCurrent(glState.window, glState.context);
         if (status) {
             fprintf(stderr, "SDL_GL_MakeCurrent(): %s\n", SDL_GetError());
         }
@@ -147,44 +186,34 @@ int main(int argc, char *argv[])
         GLuint vertexShader = load_shader(vshaderSrc, GL_VERTEX_SHADER);
         GLuint fragmentShader = load_shader(fshaderSrc, GL_FRAGMENT_SHADER);
 
-        GLuint shaderProgram = glCreateProgram();
-        glAttachShader(shaderProgram, vertexShader);
-        glAttachShader(shaderProgram, fragmentShader);
+        glState.shaderProgram = glCreateProgram();
+        glAttachShader(glState.shaderProgram, vertexShader);
+        glAttachShader(glState.shaderProgram, fragmentShader);
 
-        glLinkProgram(shaderProgram);
-        glUseProgram(shaderProgram);
+        glLinkProgram(glState.shaderProgram);
+        glUseProgram(glState.shaderProgram);
 
-        GLuint vertexBuffer;
-        glGenBuffers(1, &vertexBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        glGenBuffers(1, &glState.vertexBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, glState.vertexBuffer);
         glBufferData(GL_ARRAY_BUFFER, sizeof(cubePoints), cubePoints, GL_STATIC_DRAW);
 
-        glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        SDL_Event event;
+        bool run = true;
+        while (run)
+        {
+            while (SDL_PollEvent(&event))
+            {
+                switch (event.type)
+                {
+                    case SDL_QUIT:
+                        run = false;
+                        break;
+                }
+            }
 
-        glm::mat4 mProj(glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f));
-        glm::mat4 mView= glm::lookAt(
-                glm::vec3(4,3,3),
-                glm::vec3(0,0,0),
-                glm::vec3(0,1,0)
-                );
-        glm::mat4 mModel = glm::mat4(1.0f);
-        glm::mat4 mvp = mProj * mView * mModel;
-        GLuint mvpID = glGetUniformLocation(shaderProgram, "MVP");
-        glUniformMatrix4fv(mvpID, 1, GL_FALSE, &mModel[0][0]);
-
-        GLuint vertexPosID = glGetAttribLocation(shaderProgram, "vertexPos");
-        glEnableVertexAttribArray(vertexPosID);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-        glVertexAttribPointer(vertexPosID, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-        glDrawArrays(GL_POINTS, 0, 9);
-
-        glDisableVertexAttribArray(vertexPosID);
-
-        SDL_GL_SwapWindow(window);
-
-        SDL_Delay(2000);
+            render(glState);
+            SDL_Delay(100);
+        }
     }
     catch (const std::exception &e)
     {
@@ -193,11 +222,11 @@ int main(int argc, char *argv[])
 #endif
     }
 
-    if (context)
-        SDL_GL_DeleteContext(context);
+    if (glState.context)
+        SDL_GL_DeleteContext(glState.context);
 
-    if (window)
-        SDL_DestroyWindow(window);
+    if (glState.window)
+        SDL_DestroyWindow(glState.window);
 
     SDL_Quit();
 
