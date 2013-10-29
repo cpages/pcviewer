@@ -44,7 +44,7 @@ namespace
         void main() { \
             vec4 v = vec4(vertexPos, 1); \
             gl_Position = MVP * v; \
-            gl_PointSize = 5.0; \
+            gl_PointSize = 15.0; \
         }";
 
     const char *fshaderSrc =
@@ -124,9 +124,12 @@ int main(int argc, char *argv[])
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
         //SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
+        //TODO: using _DESKTOP sometimes ends up in black screen, and does not
+        //work if I add the whole mesa path in LD_LIBRARY_PATH (points are not
+        //painted), but seems the way to go
         window = SDL_CreateWindow("PCViewer", SDL_WINDOWPOS_UNDEFINED,
-                SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT,
-                SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
+                SDL_WINDOWPOS_UNDEFINED, 0, 0,
+                SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN_DESKTOP);
         if (window == NULL)
             throw std::runtime_error(fillSDLError("Failed to create window"));
 
@@ -168,7 +171,7 @@ int main(int argc, char *argv[])
         glm::mat4 mModel = glm::mat4(1.0f);
         glm::mat4 mvp = mProj * mView * mModel;
         GLuint mvpID = glGetUniformLocation(shaderProgram, "MVP");
-        glUniformMatrix4fv(mvpID, 1, GL_FALSE, &mvp[0][0]);
+        glUniformMatrix4fv(mvpID, 1, GL_FALSE, &mModel[0][0]);
 
         GLuint vertexPosID = glGetAttribLocation(shaderProgram, "vertexPos");
         glEnableVertexAttribArray(vertexPosID);
@@ -181,7 +184,7 @@ int main(int argc, char *argv[])
 
         SDL_GL_SwapWindow(window);
 
-        SDL_Delay(1000);
+        SDL_Delay(2000);
     }
     catch (const std::exception &e)
     {
