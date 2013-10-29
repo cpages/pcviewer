@@ -239,6 +239,9 @@ int main(int argc, char *argv[])
                     case SDL_FINGERUP:
                         rotating = false;
                         break;
+                    case SDL_MULTIGESTURE:
+                        fov -= event.mgesture.dDist * 100;
+                        break;
 #else
                     case SDL_MOUSEBUTTONDOWN:
                         if (event.button.button == SDL_BUTTON_LEFT)
