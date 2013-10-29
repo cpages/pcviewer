@@ -161,6 +161,7 @@ namespace
 int main(int argc, char *argv[])
 {
     GLState glState;
+    float fov = 45.f;
     try
     {
         srand(time(NULL));
@@ -213,14 +214,11 @@ int main(int argc, char *argv[])
         glBufferData(GL_ARRAY_BUFFER, sizeof(cubePoints), cubePoints, GL_STATIC_DRAW);
 
         //prepare fix view matrices
-        const glm::mat4 mProj =
-            glm::perspective(45.0f, float(WIDTH) / HEIGHT, 0.1f, 100.0f);
         const glm::mat4 mView = glm::lookAt(
                 glm::vec3(0,3,10),
                 glm::vec3(0,0,0),
                 glm::vec3(0,1,0)
                 );
-        const glm::mat4 mProjView = mProj * mView;
 
         ModelPos pcPos;
         SDL_Event event;
@@ -254,6 +252,12 @@ int main(int argc, char *argv[])
                         else if (event.button.button == SDL_BUTTON_RIGHT)
                             rotating = false;
                         break;
+                    case SDL_MOUSEWHEEL:
+                        if (event.wheel.y > 0)
+                            fov += 1;
+                        else if (event.wheel.y < 0)
+                            fov -= 1;
+                        break;
 #endif
                     case SDL_MOUSEMOTION:
                         if (translating)
@@ -273,7 +277,10 @@ int main(int argc, char *argv[])
                 }
             }
 
-            render(glState, mProjView * mModelFromPos(pcPos));
+            const glm::mat4 mProj =
+                glm::perspective(fov, float(WIDTH) / HEIGHT, 0.1f, 100.0f);
+            const glm::mat4 mvp = mProj * mView * mModelFromPos(pcPos);
+            render(glState, mvp);
             SDL_Delay(10);
         }
     }
