@@ -163,12 +163,10 @@ int main(int argc, char *argv[])
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
         //SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
-        //TODO: using _DESKTOP sometimes ends up in black screen, and does not
-        //work if I add the whole mesa path in LD_LIBRARY_PATH (points are not
-        //painted), but seems the way to go
+        //TODO: learn about _DESKTOP
         glState.window = SDL_CreateWindow("PCViewer", SDL_WINDOWPOS_UNDEFINED,
-                SDL_WINDOWPOS_UNDEFINED, 0, 0,
-                SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN_DESKTOP);
+                SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT,
+                SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
         if (glState.window == NULL)
             throw std::runtime_error(fillSDLError("Failed to create window"));
 
