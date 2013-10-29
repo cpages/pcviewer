@@ -5,6 +5,8 @@
 #include <cmath>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include "SDL.h"
 #include "SDL_opengles2.h"
 
@@ -36,6 +38,20 @@ namespace
         SDL_GLContext context;
         GLuint shaderProgram;
         GLuint vertexBuffer;
+    };
+
+    struct ModelPos
+    {
+        ModelPos():
+            tx(0.f), ty(0.f), tz(0.f), rx(0.f), ry(0.f), rz(0.f)
+        {}
+
+        float tx;
+        float ty;
+        float tz;
+        float rx;
+        float ry;
+        float rz;
     };
 
     std::string
@@ -111,22 +127,30 @@ namespace
        return shader;
     }
 
+    glm::mat4
+    mModelFromPos(ModelPos &mp)
+    {
+        glm::mat4 trans = glm::translate(glm::mat4(1.f),
+                glm::vec3(mp.tx, mp.ty, mp.tz));
+        glm::quat rotQuat(glm::vec3(mp.rx, mp.ry, mp.rz));
+        return trans * glm::toMat4(rotQuat);
+    }
+
     void
-    render(GLState &glState)
+    render(GLState &glState, const glm::mat4 &mModel)
     {
         glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glm::mat4 mProj(glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f));
         glm::mat4 mView= glm::lookAt(
-                glm::vec3(4,3,3),
+                glm::vec3(0,3,10),
                 glm::vec3(0,0,0),
                 glm::vec3(0,1,0)
                 );
-        glm::mat4 mModel = glm::mat4(1.0f);
         glm::mat4 mvp = mProj * mView * mModel;
         GLuint mvpID = glGetUniformLocation(glState.shaderProgram, "MVP");
-        glUniformMatrix4fv(mvpID, 1, GL_FALSE, &mModel[0][0]);
+        glUniformMatrix4fv(mvpID, 1, GL_FALSE, &mvp[0][0]);
 
         GLuint vertexPosID = glGetAttribLocation(glState.shaderProgram, "vertexPos");
         glEnableVertexAttribArray(vertexPosID);
@@ -195,6 +219,7 @@ int main(int argc, char *argv[])
         glBindBuffer(GL_ARRAY_BUFFER, glState.vertexBuffer);
         glBufferData(GL_ARRAY_BUFFER, sizeof(cubePoints), cubePoints, GL_STATIC_DRAW);
 
+        ModelPos pcPos;
         SDL_Event event;
         bool run = true;
         while (run)
@@ -209,8 +234,9 @@ int main(int argc, char *argv[])
                 }
             }
 
-            render(glState);
-            SDL_Delay(100);
+            render(glState, mModelFromPos(pcPos));
+            pcPos.ry += .01;
+            SDL_Delay(10);
         }
     }
     catch (const std::exception &e)
