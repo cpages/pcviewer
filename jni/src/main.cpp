@@ -3,12 +3,14 @@
 #include <stdexcept>
 #include <sstream>
 #include <cmath>
+#include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include "SDL.h"
 #include "SDL_opengles2.h"
+#include "shared.hpp"
 
 #ifdef __ANDROID__
 #include <android/log.h>
@@ -28,6 +30,8 @@
 
 namespace
 {
+    std::vector<Vertex> vertices(3);
+
     struct GLState
     {
         GLState():
@@ -77,19 +81,6 @@ namespace
         void main() { \
             gl_FragColor = vec4(1,0,0,1); \
         }";
-
-    const GLfloat cubePoints[] =
-    {
-        -1.0f, -1.0f, 1.0f,
-        1.0f, -1.0f, 1.0f,
-        -1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        -1.0f, -1.0f, -1.0f,
-        1.0f, -1.0f, -1.0f,
-        -1.0f, 1.0f, -1.0f,
-        1.0f, 1.0f, -1.0f,
-        0.0f, 0.0f, 0.0f
-    };
 
 #if 0
     void
@@ -148,9 +139,10 @@ namespace
         GLuint vertexPosID = glGetAttribLocation(glState.shaderProgram, "vertexPos");
         glEnableVertexAttribArray(vertexPosID);
         glBindBuffer(GL_ARRAY_BUFFER, glState.vertexBuffer);
-        glVertexAttribPointer(vertexPosID, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glVertexAttribPointer(vertexPosID, 3, GL_FLOAT, GL_FALSE,
+                sizeof(Vertex), 0);
 
-        glDrawArrays(GL_POINTS, 0, 9);
+        glDrawArrays(GL_POINTS, 0, vertices.size());
 
         glDisableVertexAttribArray(vertexPosID);
 
@@ -209,9 +201,20 @@ int main(int argc, char *argv[])
         glLinkProgram(glState.shaderProgram);
         glUseProgram(glState.shaderProgram);
 
+        vertices[0].pos[0] = 0;
+        vertices[0].pos[1] = 0;
+        vertices[0].pos[2] = 0;
+        vertices[1].pos[0] = 1;
+        vertices[1].pos[1] = 0;
+        vertices[1].pos[2] = 1;
+        vertices[2].pos[0] = -1;
+        vertices[2].pos[1] = 0;
+        vertices[2].pos[2] = 1;
+
         glGenBuffers(1, &glState.vertexBuffer);
         glBindBuffer(GL_ARRAY_BUFFER, glState.vertexBuffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(cubePoints), cubePoints, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex),
+                &vertices[0], GL_STATIC_DRAW);
 
         //prepare fix view matrices
         const glm::mat4 mView = glm::lookAt(
