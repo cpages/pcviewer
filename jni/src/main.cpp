@@ -11,6 +11,7 @@
 #include "SDL.h"
 #include "SDL_opengles2.h"
 #include "shared.hpp"
+#include "plyReader.hpp"
 
 #ifdef __ANDROID__
 #include <android/log.h>
@@ -73,7 +74,7 @@ namespace
         void main() { \
             vec4 v = vec4(vertexPos, 1); \
             gl_Position = MVP * v; \
-            gl_PointSize = 15.0; \
+            gl_PointSize = 5.0; \
         }";
 
     const char *fshaderSrc =
@@ -201,15 +202,7 @@ int main(int argc, char *argv[])
         glLinkProgram(glState.shaderProgram);
         glUseProgram(glState.shaderProgram);
 
-        vertices[0].pos[0] = 0;
-        vertices[0].pos[1] = 0;
-        vertices[0].pos[2] = 0;
-        vertices[1].pos[0] = 1;
-        vertices[1].pos[1] = 0;
-        vertices[1].pos[2] = 1;
-        vertices[2].pos[0] = -1;
-        vertices[2].pos[1] = 0;
-        vertices[2].pos[2] = 1;
+        readPLY("ant.ply", vertices);
 
         glGenBuffers(1, &glState.vertexBuffer);
         glBindBuffer(GL_ARRAY_BUFFER, glState.vertexBuffer);
@@ -218,7 +211,7 @@ int main(int argc, char *argv[])
 
         //prepare fix view matrices
         const glm::mat4 mView = glm::lookAt(
-                glm::vec3(0,3,10),
+                glm::vec3(0,0,50),
                 glm::vec3(0,0,0),
                 glm::vec3(0,1,0)
                 );

@@ -14,7 +14,9 @@ include_directories (
     )
 
 set (SOURCES
-    main.cpp
+    main.cpp shared.hpp
+    plyReader.cpp plyReader.hpp
+    3rdparty/rply/rply.c
     )
 
 add_definitions(-DSDL_NO_COMPAT)
