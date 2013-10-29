@@ -233,6 +233,15 @@ int main(int argc, char *argv[])
             {
                 switch (event.type)
                 {
+#ifdef __ANDROID__
+                    //TODO: add translation (2 fingers?)
+                    case SDL_FINGERDOWN:
+                        rotating = true;
+                        break;
+                    case SDL_FINGERUP:
+                        rotating = false;
+                        break;
+#else
                     case SDL_MOUSEBUTTONDOWN:
                         if (event.button.button == SDL_BUTTON_LEFT)
                             translating = true;
@@ -245,6 +254,7 @@ int main(int argc, char *argv[])
                         else if (event.button.button == SDL_BUTTON_RIGHT)
                             rotating = false;
                         break;
+#endif
                     case SDL_MOUSEMOTION:
                         if (translating)
                         {
