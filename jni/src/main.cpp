@@ -5,6 +5,7 @@
 #include <cmath>
 #include <vector>
 #include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -31,7 +32,7 @@
 
 namespace
 {
-    std::vector<Vertex> vertices(3);
+    std::vector<Vertex> vertices;
 
     struct GLState
     {
@@ -122,10 +123,41 @@ namespace
     glm::mat4
     mModelFromPos(ModelPos &mp)
     {
-        glm::mat4 trans = glm::translate(glm::mat4(1.f),
-                glm::vec3(mp.tx, mp.ty, mp.tz));
+        glm::mat4 trans = glm::translate(mp.tx, mp.ty, mp.tz);
         glm::quat rotQuat(glm::vec3(mp.rx, mp.ry, mp.rz));
         return trans * glm::toMat4(rotQuat);
+    }
+
+    glm::mat4
+    computeCenterAndScale(std::vector<Vertex> &vertices)
+    {
+        float cx, cy, cz;
+        cx = cy = cz = 0.f;
+        for (unsigned int i = 0; i < vertices.size(); ++i)
+        {
+            cx += vertices[i].pos[0];
+            cy += vertices[i].pos[1];
+            cz += vertices[i].pos[2];
+        }
+        cx /= vertices.size();
+        cy /= vertices.size();
+        cz /= vertices.size();
+        glm::mat4 mTrans = glm::translate(-cx, -cy, -cz);
+
+        float maxDist = 0.f;
+        for (unsigned int i = 0; i < vertices.size(); ++i)
+        {
+            const Vertex &v(vertices[i]);
+            float dist = (v.pos[0]-cx) * (v.pos[0]-cx) +
+                (v.pos[1]-cy) * (v.pos[1]-cy) +
+                (v.pos[2]-cz) * (v.pos[2]-cz);
+            maxDist = std::max(dist, maxDist);
+        }
+
+        const float scale = 1 / std::sqrt(maxDist);
+        glm::mat4 mScale = glm::scale(scale, scale, scale);
+
+        return mScale * mTrans;
     }
 
     void
@@ -202,7 +234,8 @@ int main(int argc, char *argv[])
         glLinkProgram(glState.shaderProgram);
         glUseProgram(glState.shaderProgram);
 
-        readPLY("ant.ply", vertices);
+        readPLY("bun_zipper.ply", vertices);
+        glm::mat4 mCenterAndScale(computeCenterAndScale(vertices));
 
         glGenBuffers(1, &glState.vertexBuffer);
         glBindBuffer(GL_ARRAY_BUFFER, glState.vertexBuffer);
@@ -211,7 +244,7 @@ int main(int argc, char *argv[])
 
         //prepare fix view matrices
         const glm::mat4 mView = glm::lookAt(
-                glm::vec3(0,0,50),
+                glm::vec3(0,0,10),
                 glm::vec3(0,0,0),
                 glm::vec3(0,1,0)
                 );
@@ -278,7 +311,7 @@ int main(int argc, char *argv[])
 
             const glm::mat4 mProj =
                 glm::perspective(fov, float(WIDTH) / HEIGHT, 0.1f, 100.0f);
-            const glm::mat4 mvp = mProj * mView * mModelFromPos(pcPos);
+            const glm::mat4 mvp = mProj * mView * mModelFromPos(pcPos) * mCenterAndScale;
             render(glState, mvp);
             SDL_Delay(10);
         }

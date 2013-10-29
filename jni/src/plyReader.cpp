@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <string>
 #include <stdio.h>
 #include "3rdparty/rply/rply.h"
 #include "shared.hpp"
