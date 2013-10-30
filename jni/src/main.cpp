@@ -75,7 +75,7 @@ namespace
         void main() { \
             vec4 v = vec4(vertexPos, 1); \
             gl_Position = MVP * v; \
-            gl_PointSize = 5.0; \
+            gl_PointSize = 2.0; \
         }";
 
     const char *fshaderSrc =
@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
 
         //prepare fix view matrices
         const glm::mat4 mView = glm::lookAt(
-                glm::vec3(0,0,10),
+                glm::vec3(0,0,5),
                 glm::vec3(0,0,0),
                 glm::vec3(0,1,0)
                 );
@@ -253,6 +253,8 @@ int main(int argc, char *argv[])
         SDL_Event event;
         bool translating = false;
         bool rotating = false;
+        SDL_FingerID activeFinger;
+        int fingerCount = 0;
         bool run = true;
         while (run)
         {
@@ -263,10 +265,24 @@ int main(int argc, char *argv[])
 #ifdef __ANDROID__
                     //TODO: add translation (2 fingers?)
                     case SDL_FINGERDOWN:
-                        rotating = true;
+                        ++fingerCount;
+                        if (!rotating)
+                        {
+                            rotating = true;
+                            activeFinger = event.tfinger.fingerId;
+                        }
                         break;
                     case SDL_FINGERUP:
-                        rotating = false;
+                        --fingerCount;
+                        if (rotating && event.tfinger.fingerId == activeFinger)
+                            rotating = false;
+                        break;
+                    case SDL_FINGERMOTION:
+                        if (rotating && fingerCount == 1 && event.tfinger.fingerId == activeFinger)
+                        {
+                            pcPos.rx += event.tfinger.dy * 5;
+                            pcPos.ry += event.tfinger.dx * 5;
+                        }
                         break;
                     case SDL_MULTIGESTURE:
                         fov -= event.mgesture.dDist * 100;
@@ -290,7 +306,6 @@ int main(int argc, char *argv[])
                         else if (event.wheel.y < 0)
                             fov -= 1;
                         break;
-#endif
                     case SDL_MOUSEMOTION:
                         if (translating)
                         {
@@ -303,6 +318,7 @@ int main(int argc, char *argv[])
                             pcPos.ry += event.motion.xrel * .01;
                         }
                         break;
+#endif
                     case SDL_QUIT:
                         run = false;
                         break;
