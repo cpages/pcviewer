@@ -16,19 +16,9 @@
 
 #ifdef __ANDROID__
 #include <android/log.h>
-#define APPNAME "SDLApp"
-#define DIR_SEP "/"
-#define DIR_CUR "/sdcard/"
-#define WIDTH 320
-#define HEIGHT 480
 #else
 #include  <iostream>
-#define DIR_SEP "/"
-#define DIR_CUR ""
-#define WIDTH 1280
-#define HEIGHT 800
 #endif
-#define DATAFILE(X) DIR_CUR "data" DIR_SEP X
 
 namespace
 {
