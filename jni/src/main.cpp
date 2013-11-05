@@ -206,10 +206,10 @@ int main(int argc, char *argv[])
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
         //SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
-        //TODO: learn about _DESKTOP
+        //with _DESKTOP sometimes nothing is drawn, only glClear seems to work
         glState.window = SDL_CreateWindow("PCViewer", SDL_WINDOWPOS_UNDEFINED,
-                SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT,
-                SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
+                SDL_WINDOWPOS_UNDEFINED, 0, 0,
+                SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN_DESKTOP);
         if (glState.window == NULL)
             throw std::runtime_error(fillSDLError("Failed to create window"));
 
@@ -325,8 +325,10 @@ int main(int argc, char *argv[])
                 }
             }
 
+            SDL_DisplayMode dm;
+            SDL_GetWindowDisplayMode(glState.window, &dm);
             const glm::mat4 mProj =
-                glm::perspective(fov, float(WIDTH) / HEIGHT, 0.1f, 100.0f);
+                glm::perspective(fov, float(dm.w) / dm.h, 0.1f, 100.0f);
             const glm::mat4 mvp = mProj * mView * mModelFromPos(pcPos) * mCenterAndScale;
             render(glState, mvp);
             SDL_Delay(10);

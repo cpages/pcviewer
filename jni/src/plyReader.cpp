@@ -59,7 +59,7 @@ readPLY(const char *file, std::vector<Vertex> &vertices)
     ply_set_read_cb(ply, "vertex", "y", vertex_cb, &gData, 0);
     ply_set_read_cb(ply, "vertex", "z", vertex_cb, &gData, 1);
     ntriangles = ply_set_read_cb(ply, "face", "vertex_indices", face_cb, NULL, 0);
-    printf("%ld\n%ld\n", nvertices, ntriangles);
+    //printf("%ld\n%ld\n", nvertices, ntriangles);
     if (!ply_read(ply)) throw std::runtime_error("error parsing ply");
     ply_close(ply);
 }
